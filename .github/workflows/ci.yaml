@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install '.[dev]'
+      - name: Test
+        run: pytest
+      - name: Lint
+        run: ruff check .
+      - name: Validate benchmark tasks
+        run: op06 validate benchmark/tasks
+      - name: Run smoke benchmark
+        run: OP06_ALLOW_DEMO_MODEL=1 op06 benchmark benchmark/cases/smoke.jsonl --strict-cases
+      - name: Build container
+        run: docker build -t op06-triagebench:ci .
